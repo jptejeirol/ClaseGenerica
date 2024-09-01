@@ -74,7 +74,7 @@ public class RooMakingJFX3D extends Application {
     private double rotateX = 0, rotateY = 0;
     private double rotateSpeed = 0.2;
     private double zoomSpeed = 1.1;
-    private double gravity = 5;
+    private double gravity = 8;
     private double floorY = 1000;
     
     private Group root3D;
@@ -335,20 +335,19 @@ public class RooMakingJFX3D extends Application {
         return controlPanel;
     }
 
-private void OrdenarObjetos() {
+/*private void OrdenarObjetos() {
     Random random = new Random();
     //z=0 es a la derecha, x = 0 es al fondo
-    double rangoMinX = -2000; // Rango ajustado
-    double rangoMaxX = 2000;
-    double rangoMinZ = -2000; // Rango ajustado
-    double rangoMaxZ = 2000;
-    double margenSeguridad = 50; // Distancia mínima entre objetos para evitar solapamiento
+    double rangoMinX = -0.8*wallBack.getWidth()/2; // Rango ajustado
+    double rangoMaxX = 0.8*wallBack.getWidth()/2;
+    double rangoMinZ = -0.8*wallLeft.getDepth()/2; // Rango ajustado
+    double rangoMaxZ = 0.8*wallLeft.getDepth()/2;
+    double margenSeguridad = 500; // Distancia mínima entre objetos para evitar solapamiento
 
     List<Movible> colocados = new ArrayList<>();
 
     for (javafx.scene.Node node : root3D.getChildren()) {
-        if (node instanceof Movible) {
-            Movible movible = (Movible) node;
+        if (node instanceof Movible movible) {
 
             if (!movible.isFijo()) { 
                 // Si fijo es false, saltar este objeto y no cambiar su posición
@@ -359,23 +358,15 @@ private void OrdenarObjetos() {
             do {
                 solapado = false;
                 double nuevaX, nuevaZ;
-                // Elegir aleatoriamente si X o Z tendrá el valor 0 o 5000
-                if (random.nextBoolean()) {
-                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
-                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
-                } else {
-                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
-                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                }
-                // Generar nuevas posiciones aleatorias
+
                 if (random.nextBoolean()) {
                     // Si se elige que X sea diferente de 0 o 5000, Z debe ser 0 o 5000
-                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
-                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
+                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble() - Math.abs(movible.getBoundsInParent().getMaxX());
+                    nuevaZ = (random.nextBoolean()) ? (rangoMinZ + Math.abs(movible.getBoundsInParent().getMaxZ())) : (rangoMaxZ - Math.abs(movible.getBoundsInParent().getMaxZ()));
                 } else {
                     // Si se elige que Z sea diferente de 0 o 5000, X debe ser 0 o 5000
-                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
-                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
+                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble() - Math.abs(movible.getBoundsInParent().getMaxZ());
+                    nuevaX = (random.nextBoolean()) ? (rangoMinX + Math.abs(movible.getBoundsInParent().getMaxX())) : (rangoMaxX - Math.abs(movible.getBoundsInParent().getMaxX()));
                 }
 
                 // Verificar si la nueva posición solapa con algún objeto ya colocado
@@ -400,7 +391,192 @@ private void OrdenarObjetos() {
             } while (solapado); // Repetir hasta encontrar una posición no solapada
         }
     }
+}*/
+
+/*    
+private void OrdenarObjetos() {
+    Random random = new Random();
+    // Ajustando los rangos a las dimensiones de las paredes
+    double rangoMinX = -wallBack.getWidth() / 2;
+    double rangoMaxX = wallBack.getWidth() / 2;
+    double rangoMinZ = -wallLeft.getDepth() / 2;
+    double rangoMaxZ = wallLeft.getDepth() / 2;
+    double margenSeguridad = 500; // Distancia mínima entre objetos para evitar solapamiento
+
+    List<Movible> colocados = new ArrayList<>();
+
+    for (javafx.scene.Node node : root3D.getChildren()) {
+        if (node instanceof Movible movible) {
+
+            if (!movible.isFijo()) { 
+                continue; // Saltar este objeto si no es fijo
+            }
+
+            boolean solapado;
+            do {
+                solapado = false;
+                double nuevaX, nuevaZ;
+
+                if (random.nextBoolean()) {
+                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                    nuevaZ = (random.nextBoolean()) ? rangoMinZ : rangoMaxZ;
+                } else {
+                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                    nuevaX = (random.nextBoolean()) ? rangoMinX : rangoMaxX;
+                }
+
+                // Verificar y ajustar para que las coordenadas no excedan los límites
+                nuevaX = Math.max(rangoMinX + margenSeguridad, Math.min(nuevaX, rangoMaxX - margenSeguridad));
+                nuevaZ = Math.max(rangoMinZ + margenSeguridad, Math.min(nuevaZ, rangoMaxZ - margenSeguridad));
+
+                // Verificar si la nueva posición solapa con algún objeto ya colocado
+                for (Movible colocado : colocados) {
+                    double distancia = Math.sqrt(Math.pow(colocado.getTranslateX() - nuevaX, 2) +
+                                                 Math.pow(colocado.getTranslateZ() - nuevaZ, 2));
+                    if (distancia < margenSeguridad) {
+                        solapado = true;
+                        break;
+                    }
+                }
+
+                if (!solapado) {
+                    // Colocar el objeto en la nueva posición
+                    System.out.println("en x " + nuevaX + " en z " + nuevaZ);
+                    movible.setTranslateX(nuevaX);
+                    movible.setTranslateZ(nuevaZ);
+                    movible.setTranslateY(0); // Asegurar que la posición en Y sea 0
+                    colocados.add(movible); // Añadir a la lista de objetos ya colocados
+                }
+
+            } while (solapado); // Repetir hasta encontrar una posición no solapada
+        }
+    }
+}    
+    
+*/  
+    
+
+private void OrdenarObjetos() {
+    Random random = new Random();
+
+    double rangoMinX = -0.8 * wallBack.getWidth() / 2;
+    double rangoMaxX = 0.8 * wallBack.getWidth() / 2;
+    double rangoMinZ = -0.8 * wallLeft.getDepth() / 2;
+    double rangoMaxZ = 0.8 * wallLeft.getDepth() / 2;
+    double margenSeguridad = 500;
+
+    List<Movible> colocados = new ArrayList<>();
+
+    for (javafx.scene.Node node : root3D.getChildren()) {
+        if (node instanceof Movible movible) {
+
+            if (!movible.isFijo()) {
+                continue;
+            }
+
+            String clase = movible.getClass().getName();
+            double objWidth = movible.getBoundsInParent().getWidth();
+            double objDepth = movible.getBoundsInParent().getDepth();
+            boolean solapado;
+
+            do {
+                solapado = false;
+                double nuevaX, nuevaZ;
+
+                // Generar posiciones cercanas a los límites sin salirse
+                if (random.nextBoolean()) {
+                    nuevaX = (random.nextBoolean()) ? rangoMinX + objWidth / 5.5 : rangoMaxX - objWidth / 5.5;
+                    nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                } else {
+                    nuevaZ = (random.nextBoolean()) ? rangoMinZ + objDepth / 3.1 : rangoMaxZ - objDepth / 3.1;
+                    nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                }
+
+                // Ajustar nuevaX y nuevaZ para acercar los objetos a los límites sin salirse
+                nuevaX = Math.max(rangoMinX + objWidth / 5.5, Math.min(nuevaX, rangoMaxX - objWidth / 5.5));
+                nuevaZ = Math.max(rangoMinZ + objDepth / 3.1, Math.min(nuevaZ, rangoMaxZ - objDepth / 3.1));
+                
+                switch (clase) {
+                    case "CamaSimple":
+                        break;                        
+                    case "CamaDoble":
+
+                        break;
+
+                    case "Armario":
+
+                        break;
+
+                    case "Mueble":
+                        break;                        
+                    case "Mesa":
+
+                        break;
+
+                    case "MesaDeNoche":
+                        // Buscar una cama cercana para colocar la mesa de noche al lado
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("CamaSimple") || colocado.getClass().getName().equals("CamaDoble")) {
+                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
+                                nuevaZ = colocado.getTranslateZ();
+                                break;
+                            }
+                        }
+                        break;
+
+                    case "Silla":
+                        // Buscar una mesa cercana para colocar la silla al lado
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("Mesa")) {
+                                nuevaX = colocado.getTranslateX() + (objWidth / 2 + colocado.getBoundsInParent().getWidth() / 2);
+                                nuevaZ = colocado.getTranslateZ();
+                                break;
+                            }
+                        }
+                        break;
+
+                    case "TV":
+                    case "TVGrande":
+                        // Buscar un mueble o mesa para colocar la TV encima o al frente
+                        for (Movible colocado : colocados) {
+                            if (colocado.getClass().getName().equals("Mueble") || colocado.getClass().getName().equals("Mesa")) {
+                                nuevaX = colocado.getTranslateX();
+                                nuevaZ = colocado.getTranslateZ() + (objDepth / 2 + colocado.getBoundsInParent().getDepth() / 2);
+                                movible.setTranslateY(colocado.getBoundsInParent().getMaxY());
+                                break;
+                            }
+                        }
+                        break;
+
+                    default:
+                        nuevaX = rangoMinX + (rangoMaxX - rangoMinX) * random.nextDouble();
+                        nuevaZ = rangoMinZ + (rangoMaxZ - rangoMinZ) * random.nextDouble();
+                        break;
+                }                
+
+                // Verificar solapamiento con otros objetos
+                for (Movible colocado : colocados) {
+                    double distancia = Math.sqrt(Math.pow(colocado.getTranslateX() - nuevaX, 2) +
+                                                 Math.pow(colocado.getTranslateZ() - nuevaZ, 2));
+                    if (distancia < margenSeguridad) {
+                        solapado = true;
+                        break;
+                    }
+                }
+
+                if (!solapado) {
+                    movible.setTranslateX(nuevaX);
+                    movible.setTranslateZ(nuevaZ);
+                    //movible.setTranslateY(0);
+                    colocados.add(movible);
+                }
+
+            } while (solapado);
+        }
+    }
 }
+    
+    
         public abstract class Movible extends Group {
         private boolean fijo = false;
 
@@ -413,6 +589,8 @@ private void OrdenarObjetos() {
         }
     }
 
+        
+        
    class Sphere3D extends Movible {
         private Sphere sphere;
         private boolean fijo;
@@ -895,36 +1073,7 @@ private void OrdenarObjetos() {
         this.fijo = fijo;
     }
     }
-
-
-    /*private void addObject(String objectType) {
-        Shape3D newObject = null;
-        switch (objectType) {
-            case "Prisma":
-                newObject = new Box(100, 100, 100);
-                break;
-            case "Esfera":
-                newObject = new Sphere(100);
-                break;
-            case "Cilindro":
-                newObject = new Cylinder(100, 100);
-                break;                
-        }
-        
-        if (newObject != null) {
-            newObject.setMaterial(new PhongMaterial(Color.color(Math.random(), Math.random(), Math.random())));
-            newObject.setTranslateX(0);
-            newObject.setTranslateY(-500);
-            newObject.setTranslateZ(0);
-            newObject.setOnMousePressed(this::handleObjectPressed);
-            newObject.setOnMouseDragged(this::handleObjectDragged);
-            newObject.setOnMouseReleased(event -> selectedObject = null);
-            setupContextMenu(newObject); // Configurar menú contextual
-            root3D.getChildren().add(newObject);
-        }
-    }
-    */
-    
+   
         private void showDimensionDialog(String objectType) {
         Stage dialog = new Stage();
         dialog.setTitle("Ingresar dimensiones para " + objectType);
